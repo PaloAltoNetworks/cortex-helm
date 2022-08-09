@@ -16,7 +16,7 @@ spec:
       labels: {{- include "cortex-xdr.labels" . | nindent 8 }}
 
       annotations:
-        {{ toYaml .Values.daemonset.podAnnotations | indent 8 }}
+{{ toYaml .Values.daemonset.podAnnotations | indent 8 }}
 
     spec:
       {{- if .Values.serviceAccount.create }}
@@ -89,10 +89,12 @@ spec:
 
         - name: agent-ids
           mountPath: /etc/traps
-
+        
+        {{- if .Values.agent.createSecret }}
         - name: deployment-secrets
           mountPath: /opt/traps/config/deployment
           readOnly: true
+        {{- end }}  
 
         resources:
 {{ toYaml .Values.daemonset.resources | indent 10 }}
