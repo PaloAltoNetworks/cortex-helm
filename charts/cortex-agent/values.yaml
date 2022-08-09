@@ -31,6 +31,9 @@ agent:
   # Agent distribution id should be retrieved from the tenant
   distributionId: ""
 
+  # Set to "false" to inject distributionId externally, e.g. Vault-agent-injector
+  createSecret: true
+  
   # The default distribution server comes with the image but it can be changed
   # through here (for development) if needed
   distributionServer: ""
