@@ -146,11 +146,9 @@ spec:
           path: /etc/traps
           type: DirectoryOrCreate
 
-      {{- if .Values.rbac.create }}
       - name: deployment-secrets
         secret:
           secretName: {{ include "cortex-xdr.deploymentSecretName" . }}
-      {{- end }}
 
       imagePullSecrets:
       - name: {{ include "cortex-xdr.dockerPullSecretName" . }}
