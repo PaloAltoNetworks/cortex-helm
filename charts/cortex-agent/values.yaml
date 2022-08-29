@@ -50,6 +50,8 @@ daemonset:
   podAnnotations:
     container.apparmor.security.beta.kubernetes.io/cortex-agent: unconfined
 
+  affinity: {}
+
   priorityClassName: ""
 
   # Makes pods runnable on all nodes including master node.
