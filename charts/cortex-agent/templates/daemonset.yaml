@@ -96,7 +96,7 @@ spec:
         - name: agent-ids
           mountPath: /etc/traps
           
-        {{- if .Values.daemonsetSecret.create }}
+        {{- if .Values.deploymentSecret.create }}
         - name: deployment-secrets
           mountPath: /opt/traps/config/deployment
           readOnly: true
@@ -145,11 +145,9 @@ spec:
           type: DirectoryOrCreate
 
       {{- if .Values.rbac.create }}
-      {{- if .Values.daemonsetSecret.create }}
       - name: deployment-secrets
         secret:
           secretName: {{ include "cortex-xdr.deploymentSecretName" . }}
-      {{- end }}
       {{- end }}
 
       imagePullSecrets:
