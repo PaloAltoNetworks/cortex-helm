@@ -38,7 +38,7 @@ agent:
   # Proxies for the agent to use, for example: 10.10.10.1:8080,10.10.10.2:8080
   proxyList: ""
 
-daemonsetSecret:
+deploymentSecret:
   # Set to "false" to inject distributionId externally, e.g. Vault-agent-injector
   create: true
   
