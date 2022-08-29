@@ -41,7 +41,9 @@ spec:
       affinity: {{- toYaml . | nindent 8 }}
       {{- end }}
       
+      {{- if .Values.daemonset.priorityClassName }}
       priorityClassName: {{ .Values.daemonset.priorityClassName }}
+      {{- end }}
       
       containers:
       - name: cortex-agent
