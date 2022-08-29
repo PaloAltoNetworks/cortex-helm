@@ -95,8 +95,8 @@ spec:
 
         - name: agent-ids
           mountPath: /etc/traps
-        
-        {{- if .Values.agent.createSecret }}
+          
+        {{- if .Values.daemonsetSecret.create }}
         - name: deployment-secrets
           mountPath: /opt/traps/config/deployment
           readOnly: true
