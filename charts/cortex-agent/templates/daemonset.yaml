@@ -36,7 +36,13 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-
+      
+      {{- with .Values.daemonset.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
+      priorityClassName: {{ .Values.daemonset.priorityClassName }}
+      
       containers:
       - name: cortex-agent
         image: {{ .Values.daemonset.image.repository }}:{{ .Values.daemonset.image.tag }}
