@@ -145,9 +145,11 @@ spec:
           type: DirectoryOrCreate
 
       {{- if .Values.rbac.create }}
+      {{- if .Values.daemonsetSecret.create }}
       - name: deployment-secrets
         secret:
           secretName: {{ include "cortex-xdr.deploymentSecretName" . }}
+      {{- end }}
       {{- end }}
 
       imagePullSecrets:
