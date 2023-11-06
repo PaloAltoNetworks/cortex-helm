@@ -3,6 +3,17 @@ entries:
   cortex-xdr:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2023-11-06T21:38:29.786730105Z"
+    description: Cortex XDR agent helm chart
+    digest: 4b62ca4cc6a1d5dbdecbd597bd89033a17bae6e305d1b9c6de9190e64592fb4c
+    home: https://paloaltonetworks.com/
+    name: cortex-xdr
+    type: application
+    urls:
+    - https://github.com/PaloAltoNetworks/cortex-helm/releases/download/v1.6.0/cortex-xdr-1.6.0.tgz
+    version: 1.6.0
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2023-11-06T09:24:31.801955472Z"
     description: Cortex XDR agent helm chart
     digest: 9c3f9b19e0e21884fa05a73338fc6aecc1938116531ad4f4908f351eadecc495
@@ -56,4 +67,4 @@ entries:
     urls:
     - https://github.com/PaloAltoNetworks/cortex-helm/releases/download/v1.0.0/cortex-xdr-1.0.0.tgz
     version: 1.0.0
-generated: "2023-11-06T09:24:31.801368008Z"
+generated: "2023-11-06T21:38:29.784070191Z"
