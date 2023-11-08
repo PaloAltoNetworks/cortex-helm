@@ -21,7 +21,7 @@ entries:
     name: cortex-xdr
     type: application
     urls:
-    - https://github.com/PaloAltoNetworks/cortex-helm/releases/download/v1.6.1/cortex-xdr-1.6.0.tgz
+    - https://github.com/PaloAltoNetworks/cortex-helm/releases/download/v1.6.0/cortex-xdr-1.6.0.tgz
     version: 1.6.0
   - apiVersion: v2
     appVersion: 1.0.0
@@ -32,7 +32,7 @@ entries:
     name: cortex-xdr
     type: application
     urls:
-    - https://github.com/PaloAltoNetworks/cortex-helm/releases/download/v1.6.0/cortex-xdr-1.5.0.tgz
+    - https://github.com/PaloAltoNetworks/cortex-helm/releases/download/v1.5.0/cortex-xdr-1.5.0.tgz
     version: 1.5.0
   - apiVersion: v2
     appVersion: 1.0.0
