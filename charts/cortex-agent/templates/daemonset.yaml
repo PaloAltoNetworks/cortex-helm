@@ -172,7 +172,7 @@ spec:
           secretName: {{ include "cortex-xdr.deploymentSecretName" . }}
       {{- end }}
 
-      {{- if .Values.dockerPullSecret.create }}
+      {{- if (include "cortex-xdr.dockerPullSecretName" .) }}
       imagePullSecrets:
       - name: {{ include "cortex-xdr.dockerPullSecretName" . }}
       {{- end }}
