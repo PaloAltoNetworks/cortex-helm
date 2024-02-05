@@ -11,6 +11,7 @@ allowHostPID: true
 allowHostPorts: true
 allowedCapabilities:
   - SYS_ADMIN
+  - SYSLOG
   - SYS_CHROOT
   - SYS_MODULE
   - SYS_PTRACE
@@ -40,7 +41,7 @@ users:
   - system:serviceaccount:{{ .Values.namespace.name }}
   - system:serviceaccount:{{ .Values.namespace.name }}:{{ include "cortex-xdr.serviceAccountName" . }}
 volumes:
+  - downwardAPI
   - hostPath
   - secret
-  - downwardAPI
 {{- end }}
