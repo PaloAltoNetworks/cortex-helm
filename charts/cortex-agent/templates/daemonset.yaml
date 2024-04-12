@@ -51,10 +51,11 @@ spec:
         imagePullPolicy: {{ .Values.daemonset.image.pullPolicy }}
 
         securityContext:
-          {{- if .Values.platform.bottlerocket }}
+          {{- $selinuxType := include "cortex-xdr.xdrSelinuxOptionsType" . | trim }}
+          {{- if ne $selinuxType "" }}
           seLinuxOptions:
-            type: super_t
-          {{- end }}
+            type: {{ $selinuxType | quote }}
+          {{ end }}
           capabilities:
             add:
             - SYS_ADMIN

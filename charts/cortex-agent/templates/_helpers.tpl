@@ -94,3 +94,16 @@ Create the path of the /var/log volume mount on the host fs
 /var/log
 {{- end }}
 {{- end }}
+
+{{/*
+Specify the SELinux context options type
+*/}}
+{{- define "cortex-xdr.xdrSelinuxOptionsType" -}}
+{{- if .Values.platform.bottlerocket -}}
+{{- print "super_t" -}}
+{{- else if .Values.daemonset.selinuxOptionsSpcT -}}
+{{- print "spc_t" -}}
+{{- else -}}
+{{- print "" -}}
+{{- end -}}
+{{- end -}}

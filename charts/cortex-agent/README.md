@@ -14,6 +14,7 @@
 | 1.6.1         | >=7.5         | Namespace is created by the chart and no longer by helm itself. Therefore the helm namespace will be `default` (unless chosen otherwise).
 | 1.6.2         | >=7.5         |
 | 1.7.0         | >=7.5         | Bottlerocket support
+| 1.8.0         | >=7.5         | SELinux spc_t (Super Privileged Container) support
 
 ## Installing Cortex XDR helm chart
 
@@ -99,6 +100,7 @@ Even when using `--reuse-values` (which uses the values of the previous installa
 | `agent.clusterName`                    | Name of the kuberenets cluster, will be used as part of the information sent to the server                 | Since 1.5.0, agent >= 8.2
 | `namespace.name`                       | Name of the namespace the agent resides on                                                                 | Since 1.6.0
 | `namespace.create`                     | Create/Don't create namespace for the agent                                                                | Since 1.6.0
+| `daemonset.selinuxOptionsSpcT`         | Set SELinux Options type to 'spc_t'                                                                        | Since 1.8.0
 
 Note: Helm requires commas in arguments to be escaped.
 
