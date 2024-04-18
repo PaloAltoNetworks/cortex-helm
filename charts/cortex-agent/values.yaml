@@ -101,6 +101,7 @@ daemonset:
     requests:
       cpu: "200m"
       memory: "600Mi"
+  selinuxOptionsSpcT: false
 
 namespace:
   create: true
