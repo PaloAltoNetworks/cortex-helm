@@ -84,6 +84,8 @@ spec:
           value: "/var/run/pod-info"
         - name: XDR_CLUSTER_NAME_URL
           value: "metadata2"
+        - name: XDR_IS_CONTAINERIZED
+          value: "y"
         - name: XDR_PROXY_LIST
           value: {{ .Values.agent.proxyList | quote }}
         - name: XDR_ENDPOINT_TAGS
