@@ -15,8 +15,10 @@ spec:
     metadata:
       labels: {{- include "cortex-xdr.labels" . | nindent 8 }}
 
+      {{- if semverCompare "<1.30-0" .Capabilities.KubeVersion.Version }}
       annotations:
-{{ toYaml .Values.daemonset.podAnnotations | indent 8 }}
+        {{ toYaml .Values.daemonset.podAnnotations }}
+      {{- end }}
 
     spec:
       {{- if .Values.serviceAccount.create }}
@@ -55,7 +57,15 @@ spec:
           {{- if ne $selinuxType "" }}
           seLinuxOptions:
             type: {{ $selinuxType | quote }}
-          {{ end }}
+          {{- end }}
+          {{- /*
+          Prior to Kubernetes v1.30, AppArmor was specified through annotations.
+          https://kubernetes.io/docs/tutorials/security/apparmor/#specifying-apparmor-confinement
+          */ -}}
+          {{- if semverCompare ">=1.30-0" .Capabilities.KubeVersion.Version }}
+          appArmorProfile:
+            type: Unconfined
+          {{- end }}
           capabilities:
             add:
             - SYS_ADMIN
