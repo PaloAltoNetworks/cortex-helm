@@ -34,6 +34,8 @@ platform:
   gcos: false
   # Deploy on bottlerocket platform
   bottlerocket: false
+  # Deploy on autopilot cluster
+  autopilot: false
 
 rbac:
   # create/don't create Cluster Role and Cluster Role Bindings
@@ -92,15 +94,19 @@ daemonset:
 
     tag: "latest"
 
+    # for autopilot
+    url: ""
+
   # These values are the recommended values for cortex agent
   # and are not recommended to change!
   resources:
     limits:
-      cpu: "1500m"
       memory: "2Gi"
+      ephemeral-storage: "10Gi"
     requests:
       cpu: "200m"
       memory: "600Mi"
+      ephemeral-storage: "5Gi"
   selinuxOptionsSpcT: false
 
 namespace:

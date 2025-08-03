@@ -49,7 +49,12 @@ spec:
 
       containers:
       - name: cortex-agent
+        {{- if .Values.platform.autopilot }}
+        image: {{ .Values.daemonset.image.url }}
+        {{- else }}
         image: {{ .Values.daemonset.image.repository }}:{{ .Values.daemonset.image.tag }}
+        {{- end }}
+
         imagePullPolicy: {{ .Values.daemonset.image.pullPolicy }}
 
         securityContext:
@@ -71,7 +76,7 @@ spec:
             - SYS_ADMIN
             - SYSLOG
             - SYS_CHROOT
-            {{- if not .Values.platform.talos }}
+            {{- if not (or .Values.platform.talos .Values.platform.autopilot .Values.platform.bottlerocket) }}
             - SYS_MODULE
             {{- end }}
             - SYS_PTRACE
@@ -106,6 +111,10 @@ spec:
           value: {{ .Values.agent.clusterName | quote }}
         - name: XDR_VAR_LOG_HOST_PATH
           value:  {{ include "cortex-xdr.XdrVarLogHostPath" . | quote }}
+        {{- if .Values.platform.autopilot }}
+        - name: XDR_CLUSTER_TYPE
+          value: "autopilot"
+        {{- end }}
 
         volumeMounts:
 
@@ -116,8 +125,10 @@ spec:
         - name: var-log
           mountPath: /var/log
 
+        {{- if not (or .Values.platform.talos .Values.platform.autopilot .Values.platform.bottlerocket) }}
         - name: host-km-directory
           mountPath: /lib/modules
+        {{- end }}
 
         - name: pod-info
           mountPath: /var/run/pod-info
@@ -150,10 +161,12 @@ spec:
           path: {{ include "cortex-xdr.XdrVarLogHostPath" . | quote }}
           type: DirectoryOrCreate
 
+      {{- if not (or .Values.platform.talos .Values.platform.autopilot .Values.platform.bottlerocket) }}
       - name: host-km-directory
         hostPath:
           path: /lib/modules
           type: Directory
+      {{- end }}
 
       - name: pod-info
         downwardAPI:
