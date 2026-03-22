@@ -102,6 +102,7 @@ Even when using `--reuse-values` (which uses the values of the previous installa
 | `namespace.name`                       | Name of the namespace the agent resides on                                                                 | Since 1.6.0
 | `namespace.create`                     | Create/Don't create namespace for the agent                                                                | Since 1.6.0
 | `daemonset.selinuxOptionsSpcT`         | Set SELinux Options type to 'spc_t'                                                                        | Since 1.8.0
+| `agent.sensorMode`                     | Enable sensor mode for lightweight cloud-native deployments                                                | agent >= 9.3
 
 Note: Helm requires commas in arguments to be escaped.
 

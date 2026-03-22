@@ -115,6 +115,10 @@ spec:
         - name: XDR_CLUSTER_TYPE
           value: "autopilot"
         {{- end }}
+        {{- if .Values.agent.sensorMode }}
+        - name: XDR_SENSOR_MODE
+          value: "1"
+        {{- end }}
 
         volumeMounts:
 

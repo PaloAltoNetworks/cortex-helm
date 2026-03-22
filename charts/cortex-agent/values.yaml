@@ -58,6 +58,9 @@ agent:
   # Name of the kuberenetes cluster - optional
   clusterName: ""
 
+  # Enable sensor mode for lightweight cloud-native deployments
+  sensorMode: false
+
 daemonset:
   # node labels to match pods with
   nodeSelector:
