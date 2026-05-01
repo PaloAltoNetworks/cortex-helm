@@ -143,7 +143,7 @@ spec:
           mountPath: /etc/traps
         {{- end }}
 
-        {{- if .Values.deploymentSecret.create }}
+        {{- if or .Values.deploymentSecret.create .Values.deploymentSecret.name }}
         - name: deployment-secrets
           mountPath: /opt/traps/config/deployment
           readOnly: true
@@ -205,10 +205,10 @@ spec:
           type: DirectoryOrCreate
       {{- end }}
 
-      {{- if .Values.deploymentSecret.create }}
+      {{- if or .Values.deploymentSecret.create .Values.deploymentSecret.name }}
       - name: deployment-secrets
         secret:
-          secretName: {{ include "cortex-xdr.deploymentSecretName" . }}
+          secretName: {{ .Values.deploymentSecret.name | default (include "cortex-xdr.deploymentSecretName" .) }}
       {{- end }}
 
       {{- if (include "cortex-xdr.dockerPullSecretName" .) }}

@@ -14,6 +14,9 @@ deploymentSecret:
   # Set to "false" to inject distributionId externally, e.g. Vault-agent-injector
   create: true
 
+  # In case you want to create your own deployment secret, enter its name here
+  name: ""
+
 serviceAccount:
   # create/don't create service account
   create: true
