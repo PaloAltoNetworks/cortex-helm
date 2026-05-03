@@ -15,6 +15,7 @@
 | 1.6.2         | >=7.5         |
 | 1.7.0         | >=7.5         | Bottlerocket support
 | 1.8.0         | >=7.5         | SELinux spc_t (Super Privileged Container) support
+| 1.9.0         | >=7.5         | Support external deployment secret
 
 ## Installing Cortex XDR helm chart
 
