@@ -16,6 +16,7 @@
 | 1.7.0         | >=7.5         | Bottlerocket support
 | 1.8.0         | >=7.5         | SELinux spc_t (Super Privileged Container) support
 | 1.9.0         | >=7.5         | Support external deployment secret
+| 1.10.0        | >=7.5         | `daemonset.resources` split into `full`/`sensor` profiles, automatically selected by `agent.sensorMode`
 
 ## Installing Cortex XDR helm chart
 
@@ -103,9 +104,37 @@ Even when using `--reuse-values` (which uses the values of the previous installa
 | `namespace.name`                       | Name of the namespace the agent resides on                                                                 | Since 1.6.0
 | `namespace.create`                     | Create/Don't create namespace for the agent                                                                | Since 1.6.0
 | `daemonset.selinuxOptionsSpcT`         | Set SELinux Options type to 'spc_t'                                                                        | Since 1.8.0
-| `agent.sensorMode`                     | Enable sensor mode for lightweight cloud-native deployments                                                | agent >= 9.3
+| `agent.sensorMode`                     | Enable sensor mode for lightweight cloud-native deployments. Also selects `daemonset.resources.sensor` over `daemonset.resources.full` | Since 1.10.0, agent >= 9.3
+| `daemonset.resources.full`             | Resource requests/limits used when `agent.sensorMode` is `false` (default)                                 | Since 1.10.0
+| `daemonset.resources.sensor`           | Resource requests/limits used when `agent.sensorMode` is `true`                                            | Since 1.10.0
 
 Note: Helm requires commas in arguments to be escaped.
+
+### Migration from chart < 1.10.0
+
+In 1.10.0 the `daemonset.resources` block was restructured. The previous shape:
+
+```yaml
+daemonset:
+  resources:
+    limits:    { memory: "2Gi", ephemeral-storage: "10Gi" }
+    requests:  { cpu: "200m", memory: "600Mi", ephemeral-storage: "5Gi" }
+```
+
+is now nested under a profile name:
+
+```yaml
+daemonset:
+  resources:
+    full:    # used when agent.sensorMode == false
+      limits:    { memory: "2Gi", ephemeral-storage: "10Gi" }
+      requests:  { cpu: "200m", memory: "600Mi", ephemeral-storage: "5Gi" }
+    sensor:  # used when agent.sensorMode == true
+      limits:    { cpu: "1000m", memory: "350Mi", ephemeral-storage: "10Gi" }
+      requests:  { cpu: "200m",  memory: "256Mi", ephemeral-storage: "5Gi" }
+```
+
+If you previously overrode `daemonset.resources.limits.*` or `daemonset.resources.requests.*`, you must move those overrides under `daemonset.resources.full.*` (and/or `daemonset.resources.sensor.*`) when upgrading. Overrides left at the old paths will be silently ignored.
 
 ## Uninstalling Cortex XDR helm chart
 
