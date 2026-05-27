@@ -103,16 +103,30 @@ daemonset:
     # for autopilot
     url: ""
 
+  # Resource profiles for the cortex agent container.
+  # The profile used at runtime is selected by `agent.sensorMode`:
+  #   sensorMode: false -> resources.full   (default, full agent)
+  #   sensorMode: true  -> resources.sensor (lightweight cloud-native)
   # These values are the recommended values for cortex agent
   # and are not recommended to change!
   resources:
-    limits:
-      memory: "2Gi"
-      ephemeral-storage: "10Gi"
-    requests:
-      cpu: "200m"
-      memory: "600Mi"
-      ephemeral-storage: "5Gi"
+    full:
+      limits:
+        memory: "2Gi"
+        ephemeral-storage: "10Gi"
+      requests:
+        cpu: "200m"
+        memory: "600Mi"
+        ephemeral-storage: "5Gi"
+    sensor:
+      limits:
+        cpu: "1000m"
+        memory: "350Mi"
+        ephemeral-storage: "10Gi"
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+        ephemeral-storage: "5Gi"
   selinuxOptionsSpcT: false
 
 namespace:

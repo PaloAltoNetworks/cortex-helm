@@ -150,7 +150,7 @@ spec:
         {{- end }}
 
         resources:
-{{ toYaml .Values.daemonset.resources | indent 10 }}
+          {{- include "cortex-xdr.daemonsetResources" . | nindent 10 }}
 
       terminationGracePeriodSeconds: {{ .Values.daemonset.terminationGracePeriodSeconds }}
 

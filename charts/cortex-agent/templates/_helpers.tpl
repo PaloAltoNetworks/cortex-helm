@@ -107,3 +107,16 @@ Specify the SELinux context options type
 {{- print "" -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Select the daemonset resources block based on agent.sensorMode.
+  sensorMode: false -> .Values.daemonset.resources.full
+  sensorMode: true  -> .Values.daemonset.resources.sensor
+*/}}
+{{- define "cortex-xdr.daemonsetResources" -}}
+{{- if .Values.agent.sensorMode -}}
+{{- toYaml .Values.daemonset.resources.sensor -}}
+{{- else -}}
+{{- toYaml .Values.daemonset.resources.full -}}
+{{- end -}}
+{{- end -}}
