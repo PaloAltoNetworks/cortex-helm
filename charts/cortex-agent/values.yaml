@@ -39,6 +39,9 @@ platform:
   bottlerocket: false
   # Deploy on autopilot cluster
   autopilot: false
+  # Deploy on Flatcar (immutable rootfs; /lib/modules is read-only).
+  # Enable together with agent.sensorMode: true.
+  flatcar: false
 
 rbac:
   # create/don't create Cluster Role and Cluster Role Bindings

@@ -76,7 +76,7 @@ spec:
             - SYS_ADMIN
             - SYSLOG
             - SYS_CHROOT
-            {{- if not (or .Values.platform.talos .Values.platform.autopilot .Values.platform.bottlerocket) }}
+            {{- if not (or .Values.platform.talos .Values.platform.autopilot .Values.platform.bottlerocket .Values.platform.flatcar) }}
             - SYS_MODULE
             {{- end }}
             - SYS_PTRACE
@@ -129,7 +129,7 @@ spec:
         - name: var-log
           mountPath: /var/log
 
-        {{- if not (or .Values.platform.talos .Values.platform.autopilot .Values.platform.bottlerocket) }}
+        {{- if not (or .Values.platform.talos .Values.platform.autopilot .Values.platform.bottlerocket .Values.platform.flatcar) }}
         - name: host-km-directory
           mountPath: /lib/modules
         {{- end }}
@@ -165,7 +165,7 @@ spec:
           path: {{ include "cortex-xdr.XdrVarLogHostPath" . | quote }}
           type: DirectoryOrCreate
 
-      {{- if not (or .Values.platform.talos .Values.platform.autopilot .Values.platform.bottlerocket) }}
+      {{- if not (or .Values.platform.talos .Values.platform.autopilot .Values.platform.bottlerocket .Values.platform.flatcar) }}
       - name: host-km-directory
         hostPath:
           path: /lib/modules

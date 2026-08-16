@@ -17,6 +17,7 @@
 | 1.8.0         | >=7.5         | SELinux spc_t (Super Privileged Container) support
 | 1.9.0         | >=7.5         | Support external deployment secret
 | 1.10.0        | >=7.5         | `daemonset.resources` split into `full`/`sensor` profiles, automatically selected by `agent.sensorMode`
+| 1.11.0        | >=7.5         | Support for Flatcar Container Linux platform
 
 ## Installing Cortex XDR helm chart
 
@@ -100,6 +101,7 @@ Even when using `--reuse-values` (which uses the values of the previous installa
 | `platform.gcos`                        | Support for GCOS (Google Container-Optimized OS) platform (Required when installing on GCOS)               | Since 1.5.0, agent >= 8.2
 | `platform.bottlerocket`                | Support for BottlerocketOS platform (Required when installing on BottlerocketOS)                           | Since 1.6.3, agent >= 8.3
 | `platform.autopilot`                   | Support for Autopilot platform (Required when installing on GKE Autopilot cluster)                         | Since 1.8.0, agent >= 8.9
+| `platform.flatcar`                     | Support for Flatcar Container Linux (Required when installing on Flatcar; use with `agent.sensorMode`)     | Since 1.11.0, agent >= 9.3
 | `agent.clusterName`                    | Name of the kuberenets cluster, will be used as part of the information sent to the server                 | Since 1.5.0, agent >= 8.2
 | `namespace.name`                       | Name of the namespace the agent resides on                                                                 | Since 1.6.0
 | `namespace.create`                     | Create/Don't create namespace for the agent                                                                | Since 1.6.0
