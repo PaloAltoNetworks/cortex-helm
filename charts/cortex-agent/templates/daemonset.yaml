@@ -1,3 +1,4 @@
+{{- include "cortex-xdr.validateTsfPersistentStorage" . }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -120,6 +121,16 @@ spec:
         - name: XDR_AGENT_FLAVOR
           value: {{ $agentFlavor | quote }}
         {{- end }}
+        {{- if .Values.tsfPersistentStorage.enabled }}
+        - name: XDR_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: XDR_TSF_STORAGE_DIR
+          value: "/var/lib/cortex-tsf"
+        {{- include "cortex-xdr.tsfTriggerEnv" (list . "memoryTsfTrigger" "XDR_TSF_MEMORY_TRIGGER") | nindent 8 }}
+        {{- include "cortex-xdr.tsfTriggerEnv" (list . "cpuTsfTrigger" "XDR_TSF_CPU_TRIGGER") | nindent 8 }}
+        {{- end }}
 
         volumeMounts:
 
@@ -148,6 +159,12 @@ spec:
         - name: deployment-secrets
           mountPath: /opt/traps/config/deployment
           readOnly: true
+        {{- end }}
+
+        {{- if .Values.tsfPersistentStorage.enabled }}
+        - name: tsf-storage
+          mountPath: /var/lib/cortex-tsf
+          subPathExpr: {{ printf "%s/$(XDR_NODE_NAME)" (trimSuffix "/" (toString .Values.tsfPersistentStorage.path)) | quote }}
         {{- end }}
 
         resources:
@@ -210,6 +227,12 @@ spec:
       - name: deployment-secrets
         secret:
           secretName: {{ .Values.deploymentSecret.name | default (include "cortex-xdr.deploymentSecretName" .) }}
+      {{- end }}
+
+      {{- if .Values.tsfPersistentStorage.enabled }}
+      - name: tsf-storage
+        persistentVolumeClaim:
+          claimName: {{ .Values.tsfPersistentStorage.pvcName | quote }}
       {{- end }}
 
       {{- if (include "cortex-xdr.dockerPullSecretName" .) }}

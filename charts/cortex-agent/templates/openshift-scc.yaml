@@ -44,4 +44,7 @@ volumes:
   - downwardAPI
   - hostPath
   - secret
+{{- if .Values.tsfPersistentStorage.enabled }}
+  - persistentVolumeClaim
+{{- end }}
 {{- end }}

@@ -19,6 +19,7 @@
 | 1.10.0        | >=7.5         | `daemonset.resources` split into `full`/`sensor` profiles, automatically selected by `agent.agentFlavor`
 | 1.11.0        | >=7.5         | Support for Flatcar Container Linux platform
 | 1.11.0        | >=7.5         | `agent.agentFlavor` added (1 = `standard`, 3 = `cloud/sensor`).
+| 1.12.0        | >=7.5         | Optional TSF persistent storage (`tsfPersistentStorage.*`) with memory/CPU TSF triggers
 
 ## Installing Cortex XDR helm chart
 
@@ -111,6 +112,11 @@ Even when using `--reuse-values` (which uses the values of the previous installa
 | `daemonset.resources.full`             | Resource requests/limits used when `agent.agentFlavor` is `1` (default)                                 | Since 1.10.0
 | `daemonset.resources.sensor`           | Resource requests/limits used when `agent.agentFlavor` is `3`                                            | Since 1.10.0
 | `agent.agentFlavor`                    | Agent flavor: `1` = standard (default), `3` = cloud/sensor. Flavor `3` also selects `daemonset.resources.sensor` | Since 1.11.0, agent >= 9.4
+| `tsfPersistentStorage.enabled`         | Copy TSFs to a customer PVC                                                                                | Since 1.12.0
+| `tsfPersistentStorage.pvcName`         | Existing ReadWriteMany PVC in the agent namespace (required when enabled)                                  | Since 1.12.0
+| `tsfPersistentStorage.path`            | Relative folder in the volume, e.g. `cortex/prod-cluster-1`; each node writes to `<path>/<node-name>`      | Since 1.12.0
+| `tsfPersistentStorage.memoryTsfTrigger.enabled` / `.percent` / `.seconds` | Collect a TSF when agent memory stays at or above `percent` (default 90) of its limit for `seconds` (default 300). Requires `tsfPersistentStorage.enabled` | Since 1.12.0
+| `tsfPersistentStorage.cpuTsfTrigger.enabled` / `.percent` / `.seconds`    | Collect a TSF when agent CPU stays at or above `percent` (default 90) of its CPU limit for `seconds` (default 300). Requires `tsfPersistentStorage.enabled` | Since 1.12.0
 
 Note: Helm requires commas in arguments to be escaped.
 

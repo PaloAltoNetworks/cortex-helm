@@ -85,6 +85,43 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
+Validate tsfPersistentStorage. Fails install/upgrade on a missing or unsafe configuration.
+Numbers are checked as strings: an integer 0 counts as "empty" in Helm, so `if` would skip it.
+*/}}
+{{- define "cortex-xdr.validateTsfPersistentStorage" -}}
+{{- with .Values.tsfPersistentStorage }}
+{{- if .enabled }}
+{{- if not .pvcName }}{{ fail "tsfPersistentStorage.enabled=true requires tsfPersistentStorage.pvcName" }}{{ end }}
+{{- if not .path }}{{ fail "tsfPersistentStorage.enabled=true requires tsfPersistentStorage.path" }}{{ end }}
+{{- if or (hasPrefix "/" (toString .path)) (has ".." (splitList "/" (toString .path))) }}{{ fail "tsfPersistentStorage.path must be relative and must not contain '..'" }}{{ end }}
+{{- if not (regexMatch "^[A-Za-z0-9._/-]+$" (toString .path)) }}{{ fail "tsfPersistentStorage.path may contain only letters, digits, '.', '_', '-' and '/'" }}{{ end }}
+{{- end }}
+{{- range $name := list "memoryTsfTrigger" "cpuTsfTrigger" }}
+{{- $t := get $.Values.tsfPersistentStorage $name | default dict }}
+{{- if $t.enabled }}
+{{- if not $.Values.tsfPersistentStorage.enabled }}{{ fail (printf "tsfPersistentStorage.%s.enabled=true requires tsfPersistentStorage.enabled=true" $name) }}{{ end }}
+{{- if not (regexMatch "^([1-9][0-9]?|100)$" (toString $t.percent)) }}{{ fail (printf "tsfPersistentStorage.%s.percent must be an integer from 1 to 100" $name) }}{{ end }}
+{{- if not (regexMatch "^[1-9][0-9]*$" (toString $t.seconds)) }}{{ fail (printf "tsfPersistentStorage.%s.seconds must be a positive integer" $name) }}{{ end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Env vars for one TSF resource trigger, rendered only when the trigger is enabled.
+Args: list <root context> <values key> <env prefix>
+*/}}
+{{- define "cortex-xdr.tsfTriggerEnv" -}}
+{{- $t := get (index . 0).Values.tsfPersistentStorage (index . 1) | default dict }}
+{{- if $t.enabled }}
+- name: {{ index . 2 }}_PERCENT
+  value: {{ toString $t.percent | quote }}
+- name: {{ index . 2 }}_SECONDS
+  value: {{ toString $t.seconds | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
 Create the path of the /var/log volume mount on the host fs
 */}}
 {{- define "cortex-xdr.XdrVarLogHostPath" -}}

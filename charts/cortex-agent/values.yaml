@@ -137,3 +137,26 @@ daemonset:
 namespace:
   create: true
   name: "cortex-xdr"
+
+# Optional: copy TSFs (crash, memory, CPU, manual; at most one per type) to
+# customer-provisioned persistent storage, so they survive node replacement.
+tsfPersistentStorage:
+  enabled: false
+  # Name of an existing PVC in the agent namespace (customer-created, ReadWriteMany).
+  # The pod stays in ContainerCreating if the PVC is missing, unbound or not RWX.
+  pvcName: ""
+  # Sub-directory inside the volume, relative and without "..", e.g. "cortex/prod-cluster-1".
+  # Each node writes only to <path>/<node-name>.
+  path: ""
+  # Collect a TSF when agent memory stays at or above `percent` of its limit for `seconds`.
+  # Requires tsfPersistentStorage.enabled=true.
+  memoryTsfTrigger:
+    enabled: false
+    percent: 90
+    seconds: 300
+  # Collect a TSF when agent CPU stays at or above `percent` of its CPU limit for `seconds`.
+  # Requires tsfPersistentStorage.enabled=true.
+  cpuTsfTrigger:
+    enabled: false
+    percent: 90
+    seconds: 300
