@@ -1,4 +1,9 @@
 {{- include "cortex-xdr.validateTsfPersistentStorage" . }}
+{{- /* Env, mount and volume render only when the PVC is ready; see cortex-xdr.tsfStorageState. */ -}}
+{{- $tsfState := include "cortex-xdr.tsfStorageState" . }}
+{{- if eq $tsfState "skipped" }}
+# {{ include "cortex-xdr.tsfStorageSkippedWarning" . }}
+{{- end }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -121,7 +126,7 @@ spec:
         - name: XDR_AGENT_FLAVOR
           value: {{ $agentFlavor | quote }}
         {{- end }}
-        {{- if .Values.tsfPersistentStorage.enabled }}
+        {{- if eq $tsfState "ready" }}
         - name: XDR_NODE_NAME
           valueFrom:
             fieldRef:
@@ -161,7 +166,7 @@ spec:
           readOnly: true
         {{- end }}
 
-        {{- if .Values.tsfPersistentStorage.enabled }}
+        {{- if eq $tsfState "ready" }}
         - name: tsf-storage
           mountPath: /var/lib/cortex-tsf
           subPathExpr: {{ printf "%s/$(XDR_NODE_NAME)" (trimSuffix "/" (toString .Values.tsfPersistentStorage.path)) | quote }}
@@ -229,7 +234,7 @@ spec:
           secretName: {{ .Values.deploymentSecret.name | default (include "cortex-xdr.deploymentSecretName" .) }}
       {{- end }}
 
-      {{- if .Values.tsfPersistentStorage.enabled }}
+      {{- if eq $tsfState "ready" }}
       - name: tsf-storage
         persistentVolumeClaim:
           claimName: {{ .Values.tsfPersistentStorage.pvcName | quote }}

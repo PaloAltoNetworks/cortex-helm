@@ -108,6 +108,33 @@ Numbers are checked as strings: an integer 0 counts as "empty" in Helm, so `if` 
 {{- end }}
 
 {{/*
+TSF persistent storage state.
+Returns "ready" when enabled and the PVC is Bound and ReadWriteMany at install/upgrade time,
+"skipped" when enabled but the PVC is not ready - missing, unbound, not RWX, or no cluster,
+and "" when disabled. Only "ready" mounts the PVC, so a bad PVC never blocks the agent pod
+at install/upgrade time.
+*/}}
+{{- define "cortex-xdr.tsfStorageState" -}}
+{{- $tsf := .Values.tsfPersistentStorage | default dict -}}
+{{- if $tsf.enabled -}}
+  {{- $pvc := lookup "v1" "PersistentVolumeClaim" .Values.namespace.name ($tsf.pvcName | toString) -}}
+  {{- $status := dig "status" dict $pvc -}}
+  {{- if and (eq (dig "phase" "" $status) "Bound") (has "ReadWriteMany" (dig "accessModes" list $status)) -}}
+ready
+  {{- else -}}
+skipped
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Warning shown when TSF persistent storage is enabled but skipped. %q escapes the user-supplied PVC name.
+*/}}
+{{- define "cortex-xdr.tsfStorageSkippedWarning" -}}
+{{- printf "WARNING: TSF persistent storage skipped: PVC %q in namespace %q was not found, is not Bound or is not ReadWriteMany (or no cluster, as with helm template). The agent runs without it; fix the PVC and run helm upgrade again." (.Values.tsfPersistentStorage.pvcName | toString) .Values.namespace.name -}}
+{{- end -}}
+
+{{/*
 Env vars for one TSF resource trigger, rendered only when the trigger is enabled.
 Args: list <root context> <values key> <env prefix>
 */}}

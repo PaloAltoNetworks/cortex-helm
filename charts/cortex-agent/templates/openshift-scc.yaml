@@ -44,7 +44,7 @@ volumes:
   - downwardAPI
   - hostPath
   - secret
-{{- if .Values.tsfPersistentStorage.enabled }}
+{{- if eq (include "cortex-xdr.tsfStorageState" .) "ready" }}
   - persistentVolumeClaim
 {{- end }}
 {{- end }}

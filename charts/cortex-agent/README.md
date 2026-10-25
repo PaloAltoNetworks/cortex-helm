@@ -113,7 +113,7 @@ Even when using `--reuse-values` (which uses the values of the previous installa
 | `daemonset.resources.sensor`           | Resource requests/limits used when `agent.agentFlavor` is `3`                                            | Since 1.10.0
 | `agent.agentFlavor`                    | Agent flavor: `1` = standard (default), `3` = cloud/sensor. Flavor `3` also selects `daemonset.resources.sensor` | Since 1.11.0, agent >= 9.4
 | `tsfPersistentStorage.enabled`         | Copy TSFs to a customer PVC                                                                                | Since 1.12.0
-| `tsfPersistentStorage.pvcName`         | Existing ReadWriteMany PVC in the agent namespace (required when enabled)                                  | Since 1.12.0
+| `tsfPersistentStorage.pvcName`         | Existing ReadWriteMany PVC in `namespace.name` (required when enabled). Mounted only if Bound and RWX at install/upgrade time, otherwise skipped with a WARNING; always skipped by `helm template` | Since 1.12.0
 | `tsfPersistentStorage.path`            | Relative folder in the volume, e.g. `cortex/prod-cluster-1`; each node writes to `<path>/<node-name>`      | Since 1.12.0
 | `tsfPersistentStorage.memoryTsfTrigger.enabled` / `.percent` / `.seconds` | Collect a TSF when agent memory stays at or above `percent` (default 90) of its limit for `seconds` (default 300). Requires `tsfPersistentStorage.enabled` | Since 1.12.0
 | `tsfPersistentStorage.cpuTsfTrigger.enabled` / `.percent` / `.seconds`    | Collect a TSF when agent CPU stays at or above `percent` (default 90) of its CPU limit for `seconds` (default 300). Requires `tsfPersistentStorage.enabled` | Since 1.12.0

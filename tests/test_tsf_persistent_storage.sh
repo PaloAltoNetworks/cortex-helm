@@ -32,39 +32,20 @@ for extra in "" "--set serviceAccount.openshift.scc.create=true"; do
     fi
 done
 
-# P1: PVC on, triggers off: volume, per-node mount, env and OpenShift permission; no trigger env.
-out=$(render "$CHART" "${ON[@]}" --set serviceAccount.openshift.scc.create=true)
-for want in 'claimName: "cortex-tsf"' \
-            'subPathExpr: "tsf-test/$(XDR_NODE_NAME)"' \
-            'mountPath: /var/lib/cortex-tsf' \
-            'fieldPath: spec.nodeName' \
-            '- persistentVolumeClaim'; do
-    has "$out" "$want" && ok "P1 renders: $want" || bad "P1 is missing: $want"
+# S1: helm template has no cluster, so the PVC lookup is empty and the feature is skipped:
+# a WARNING comment, the agent still renders, and no TSF env, mount, volume or SCC entry.
+# The mounted path (PVC Bound and RWX) is covered by charts/cortex-agent/tests (helm unittest).
+out=$(render "$CHART" "${ON[@]}" "${MEM[@]}" "${CPU[@]}" --set serviceAccount.openshift.scc.create=true)
+has "$out" '# WARNING: TSF persistent storage skipped: PVC "cortex-tsf" in namespace "cortex-xdr"' \
+    && ok "S1 skipped WARNING rendered" || bad "S1 skipped WARNING missing"
+has "$out" "kind: DaemonSet" && ok "S1 agent DaemonSet rendered" || bad "S1 agent DaemonSet missing"
+for unwanted in 'tsf-storage' 'XDR_TSF_' 'XDR_NODE_NAME' '- persistentVolumeClaim'; do
+    has "$out" "$unwanted" && bad "S1 renders: $unwanted" || ok "S1 does not render: $unwanted"
 done
-env_is "$out" XDR_TSF_STORAGE_DIR /var/lib/cortex-tsf && ok "P1 XDR_TSF_STORAGE_DIR" || bad "P1 XDR_TSF_STORAGE_DIR"
-has "$out" "_TRIGGER_" && bad "P1 renders trigger env" || ok "P1 no trigger env"
-has "$out" "LOG_SNAPSHOT" && bad "P1 renders old snapshot env" || ok "P1 no old snapshot env"
 
-# P2: memory trigger only, with defaults.
-out=$(render "$CHART" "${ON[@]}" "${MEM[@]}")
-env_is "$out" XDR_TSF_MEMORY_TRIGGER_PERCENT 90 && env_is "$out" XDR_TSF_MEMORY_TRIGGER_SECONDS 300 \
-    && ok "P2 memory trigger defaults 90/300" || bad "P2 memory trigger defaults"
-has "$out" "XDR_TSF_CPU_TRIGGER" && bad "P2 renders CPU trigger" || ok "P2 no CPU trigger"
-
-# P3: CPU trigger only, custom values.
-out=$(render "$CHART" "${ON[@]}" "${CPU[@]}" --set $P.cpuTsfTrigger.percent=80 --set $P.cpuTsfTrigger.seconds=120)
-env_is "$out" XDR_TSF_CPU_TRIGGER_PERCENT 80 && env_is "$out" XDR_TSF_CPU_TRIGGER_SECONDS 120 \
-    && ok "P3 CPU trigger 80/120" || bad "P3 CPU trigger 80/120"
-has "$out" "XDR_TSF_MEMORY_TRIGGER" && bad "P3 renders memory trigger" || ok "P3 no memory trigger"
-
-# P4: both triggers; percent 100 is accepted.
-out=$(render "$CHART" "${ON[@]}" "${MEM[@]}" "${CPU[@]}" --set $P.memoryTsfTrigger.percent=100)
-env_is "$out" XDR_TSF_MEMORY_TRIGGER_PERCENT 100 && env_is "$out" XDR_TSF_CPU_TRIGGER_PERCENT 90 \
-    && ok "P4 both triggers rendered" || bad "P4 both triggers rendered"
-
-# Trailing slash in path is trimmed.
-render "$CHART" "${ON[@]}" --set $P.path=a/b/ | grep -qF 'subPathExpr: "a/b/$(XDR_NODE_NAME)"' \
-    && ok "trailing slash in path is trimmed" || bad "trailing slash in path is not trimmed"
+# S2: the PVC name in the WARNING is escaped.
+render "$CHART" "${ON[@]}" --set "$P.pvcName=a\"b" | grep -qF 'PVC "a\"b"' \
+    && ok "S2 PVC name is escaped in the WARNING" || bad "S2 PVC name is not escaped in the WARNING"
 
 # Invalid configurations fail with a clear message.
 expect_fail() {

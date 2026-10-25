@@ -142,8 +142,9 @@ namespace:
 # customer-provisioned persistent storage, so they survive node replacement.
 tsfPersistentStorage:
   enabled: false
-  # Name of an existing PVC in the agent namespace (customer-created, ReadWriteMany).
-  # The pod stays in ContainerCreating if the PVC is missing, unbound or not RWX.
+  # Name of an existing PVC in namespace.name (customer-created, ReadWriteMany).
+  # Mounted only if it is Bound and RWX at install/upgrade time; otherwise the feature is skipped with a WARNING.
+  # Always skipped by helm template / GitOps renders (no cluster to look up).
   pvcName: ""
   # Sub-directory inside the volume, relative and without "..", e.g. "cortex/prod-cluster-1".
   # Each node writes only to <path>/<node-name>.

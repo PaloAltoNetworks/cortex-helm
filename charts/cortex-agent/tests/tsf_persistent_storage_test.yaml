@@ -1,0 +1,224 @@
+# Tests for tsfPersistentStorage against a fake cluster. The PVC is mounted only
+# when `lookup` finds it Bound and ReadWriteMany, so a bad PVC never blocks the agent pod.
+# The "skipped" WARNING comment is asserted by tests/test_tsf_persistent_storage.sh:
+# helm-unittest parses manifests and drops comments.
+suite: tsf persistent storage
+templates:
+  - templates/daemonset.yaml
+  - templates/openshift-scc.yaml
+set:
+  serviceAccount.openshift.scc.create: true
+# PVCs live in namespace.name (default "cortex-xdr").
+kubernetesProvider:
+  scheme:
+    "v1/PersistentVolumeClaim":
+      gvr:
+        version: "v1"
+        resource: "persistentvolumeclaims"
+      namespaced: true
+  objects:
+    - kind: PersistentVolumeClaim
+      apiVersion: v1
+      metadata: { name: cortex-tsf, namespace: cortex-xdr }
+      status: { phase: Bound, accessModes: [ReadWriteMany] }
+    - kind: PersistentVolumeClaim
+      apiVersion: v1
+      metadata: { name: pending-tsf, namespace: cortex-xdr }
+      status: { phase: Pending }
+    - kind: PersistentVolumeClaim
+      apiVersion: v1
+      metadata: { name: rwo-tsf, namespace: cortex-xdr }
+      status: { phase: Bound, accessModes: [ReadWriteOnce] }
+    - kind: PersistentVolumeClaim
+      apiVersion: v1
+      metadata: { name: cortex-tsf, namespace: other }
+      status: { phase: Bound, accessModes: [ReadWriteMany] }
+
+tests:
+  - it: renders nothing when disabled (default)
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content: { name: tsf-storage }
+          any: true
+        template: templates/daemonset.yaml
+      - notContains:
+          path: volumes
+          content: persistentVolumeClaim
+        template: templates/openshift-scc.yaml
+
+  - it: storage on, triggers off - PVC volume, per-node mount, env, SCC
+    set: &storageOn
+      tsfPersistentStorage.enabled: true
+      tsfPersistentStorage.pvcName: cortex-tsf
+      tsfPersistentStorage.path: tsf-test
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: XDR_NODE_NAME
+            valueFrom: { fieldRef: { fieldPath: spec.nodeName } }
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_STORAGE_DIR, value: /var/lib/cortex-tsf }
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: tsf-storage
+            mountPath: /var/lib/cortex-tsf
+            subPathExpr: tsf-test/$(XDR_NODE_NAME)
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: tsf-storage
+            persistentVolumeClaim: { claimName: cortex-tsf }
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_MEMORY_TRIGGER_PERCENT }
+          any: true
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_CPU_TRIGGER_PERCENT }
+          any: true
+        template: templates/daemonset.yaml
+      - contains:
+          path: volumes
+          content: persistentVolumeClaim
+        template: templates/openshift-scc.yaml
+
+  - it: memory trigger only, with defaults 90/300
+    set:
+      <<: *storageOn
+      tsfPersistentStorage.memoryTsfTrigger.enabled: true
+    template: templates/daemonset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_MEMORY_TRIGGER_PERCENT, value: "90" }
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_MEMORY_TRIGGER_SECONDS, value: "300" }
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_CPU_TRIGGER_PERCENT }
+          any: true
+
+  - it: CPU trigger only, custom 80/120
+    set:
+      <<: *storageOn
+      tsfPersistentStorage.cpuTsfTrigger.enabled: true
+      tsfPersistentStorage.cpuTsfTrigger.percent: 80
+      tsfPersistentStorage.cpuTsfTrigger.seconds: 120
+    template: templates/daemonset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_CPU_TRIGGER_PERCENT, value: "80" }
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_CPU_TRIGGER_SECONDS, value: "120" }
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_MEMORY_TRIGGER_PERCENT }
+          any: true
+
+  - it: both triggers; percent 100 is accepted
+    set:
+      <<: *storageOn
+      tsfPersistentStorage.memoryTsfTrigger.enabled: true
+      tsfPersistentStorage.memoryTsfTrigger.percent: 100
+      tsfPersistentStorage.cpuTsfTrigger.enabled: true
+    template: templates/daemonset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_MEMORY_TRIGGER_PERCENT, value: "100" }
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_CPU_TRIGGER_PERCENT, value: "90" }
+
+  - it: trims a trailing slash in path
+    set:
+      <<: *storageOn
+      tsfPersistentStorage.path: a/b/
+    template: templates/daemonset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: tsf-storage
+            mountPath: /var/lib/cortex-tsf
+            subPathExpr: a/b/$(XDR_NODE_NAME)
+
+  # A PVC that is missing, not Bound, not RWX or in another namespace is skipped:
+  # no env, mount, volume or SCC entry. The agent DaemonSet still renders.
+  - it: skips a missing PVC and still renders the agent
+    set:
+      <<: *storageOn
+      tsfPersistentStorage.pvcName: no-such-pvc
+      tsfPersistentStorage.memoryTsfTrigger.enabled: true
+    asserts:
+      - isKind: { of: DaemonSet }
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.volumes
+          content: { name: tsf-storage }
+          any: true
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content: { name: tsf-storage }
+          any: true
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_STORAGE_DIR }
+          any: true
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_MEMORY_TRIGGER_PERCENT }
+          any: true
+        template: templates/daemonset.yaml
+      - notContains:
+          path: volumes
+          content: persistentVolumeClaim
+        template: templates/openshift-scc.yaml
+
+  - it: skips a PVC that is not Bound
+    set:
+      <<: *storageOn
+      tsfPersistentStorage.pvcName: pending-tsf
+    template: templates/daemonset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content: { name: tsf-storage }
+          any: true
+
+  - it: skips a PVC that is not ReadWriteMany
+    set:
+      <<: *storageOn
+      tsfPersistentStorage.pvcName: rwo-tsf
+    template: templates/daemonset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content: { name: tsf-storage }
+          any: true
+
+  - it: skips a PVC that exists only in another namespace
+    set:
+      <<: *storageOn
+      namespace.name: cortex-other
+    template: templates/daemonset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content: { name: tsf-storage }
+          any: true
