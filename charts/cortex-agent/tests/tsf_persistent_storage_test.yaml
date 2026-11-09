@@ -127,6 +127,27 @@ tests:
           content: { name: XDR_TSF_MEMORY_TRIGGER_PERCENT }
           any: true
 
+  - it: seconds 86400 (maximum) is accepted
+    set:
+      <<: *storageOn
+      tsfPersistentStorage.cpuTsfTrigger.enabled: true
+      tsfPersistentStorage.cpuTsfTrigger.seconds: 86400
+    template: templates/daemonset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_CPU_TRIGGER_SECONDS, value: "86400" }
+
+  - it: rejects seconds above 86400
+    set:
+      <<: *storageOn
+      tsfPersistentStorage.cpuTsfTrigger.enabled: true
+      tsfPersistentStorage.cpuTsfTrigger.seconds: 1000000
+    template: templates/daemonset.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "cpuTsfTrigger.seconds must be an integer from 1 to 86400"
+
   - it: both triggers; percent 100 is accepted
     set:
       <<: *storageOn

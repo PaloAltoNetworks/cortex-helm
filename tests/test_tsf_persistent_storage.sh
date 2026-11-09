@@ -64,9 +64,13 @@ expect_fail "cpuTsfTrigger.enabled=true requires tsfPersistentStorage.enabled=tr
 for v in 0 101 -5 abc 50.5; do
     expect_fail "memoryTsfTrigger.percent must be an integer from 1 to 100" "${ON[@]}" "${MEM[@]}" --set $P.memoryTsfTrigger.percent=$v
 done
-for v in 0 -1 abc; do
-    expect_fail "cpuTsfTrigger.seconds must be a positive integer" "${ON[@]}" "${CPU[@]}" --set $P.cpuTsfTrigger.seconds=$v
+for v in 0 -1 abc 1.5 86401 1000000; do
+    expect_fail "cpuTsfTrigger.seconds must be an integer from 1 to 86400" "${ON[@]}" "${CPU[@]}" --set $P.cpuTsfTrigger.seconds=$v
 done
+
+# A values file parses numbers as float64 (toString gives 1e+06); the rendered digits are in helm unittest.
+printf '%s:\n  cpuTsfTrigger:\n    seconds: 1000000\n' "$P" > "$TMP/huge.yaml"
+expect_fail "cpuTsfTrigger.seconds must be an integer from 1 to 86400" "${ON[@]}" "${CPU[@]}" -f "$TMP/huge.yaml"
 
 # A disabled trigger with bad values is ignored.
 render "$CHART" "${ON[@]}" --set $P.cpuTsfTrigger.percent=0 >/dev/null \

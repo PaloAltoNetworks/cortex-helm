@@ -104,7 +104,8 @@ Numbers are checked as strings: an integer 0 counts as "empty" in Helm, so `if` 
 {{- if $t.enabled }}
 {{- if not $.Values.tsfPersistentStorage.enabled }}{{ fail (printf "tsfPersistentStorage.%s.enabled=true requires tsfPersistentStorage.enabled=true" $name) }}{{ end }}
 {{- if not (regexMatch "^([1-9][0-9]?|100)$" (toString $t.percent)) }}{{ fail (printf "tsfPersistentStorage.%s.percent must be an integer from 1 to 100" $name) }}{{ end }}
-{{- if not (regexMatch "^[1-9][0-9]*$" (toString $t.seconds)) }}{{ fail (printf "tsfPersistentStorage.%s.seconds must be a positive integer" $name) }}{{ end }}
+{{- $sec := $t.seconds }}
+{{- if or (kindIs "bool" $sec) (ne (float64 $sec) (float64 (int64 $sec))) (lt (int64 $sec) 1) (gt (int64 $sec) 86400) }}{{ fail (printf "tsfPersistentStorage.%s.seconds must be an integer from 1 to 86400" $name) }}{{ end }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -153,9 +154,9 @@ Args: list <root context> <values key> <env prefix>
 {{- $t := get (index . 0).Values.tsfPersistentStorage (index . 1) | default dict }}
 {{- if $t.enabled }}
 - name: {{ index . 2 }}_PERCENT
-  value: {{ toString $t.percent | quote }}
+  value: {{ $t.percent | int | quote }}
 - name: {{ index . 2 }}_SECONDS
-  value: {{ toString $t.seconds | quote }}
+  value: {{ $t.seconds | int | quote }}
 {{- end }}
 {{- end }}
 
