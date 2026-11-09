@@ -140,7 +140,49 @@ tests:
           content: { name: XDR_TSF_MEMORY_TRIGGER_PERCENT, value: "100" }
       - contains:
           path: spec.template.spec.containers[0].env
-          content: { name: XDR_TSF_CPU_TRIGGER_PERCENT, value: "90" }
+          content: { name: XDR_TSF_CPU_TRIGGER_PERCENT, value: "65" }
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_AUTO_INTERVAL_SECONDS }
+          any: true
+
+  - it: autoTsfIntervalHours renders seconds; bounds 1 and 168 accepted
+    set:
+      <<: *storageOn
+      tsfPersistentStorage.autoTsfIntervalHours: 1
+    template: templates/daemonset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_AUTO_INTERVAL_SECONDS, value: "3600" }
+
+  - it: autoTsfIntervalHours 168 renders 604800
+    set:
+      <<: *storageOn
+      tsfPersistentStorage.autoTsfIntervalHours: 168
+    template: templates/daemonset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_AUTO_INTERVAL_SECONDS, value: "604800" }
+
+  - it: rejects autoTsfIntervalHours 0
+    set:
+      <<: *storageOn
+      tsfPersistentStorage.autoTsfIntervalHours: 0
+    template: templates/daemonset.yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: tsfPersistentStorage.autoTsfIntervalHours must be an integer from 1 to 168
+
+  - it: rejects autoTsfIntervalHours 169
+    set:
+      <<: *storageOn
+      tsfPersistentStorage.autoTsfIntervalHours: 169
+    template: templates/daemonset.yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: tsfPersistentStorage.autoTsfIntervalHours must be an integer from 1 to 168
 
   - it: trims a trailing slash in path
     set:

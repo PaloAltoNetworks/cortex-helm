@@ -96,6 +96,9 @@ Numbers are checked as strings: an integer 0 counts as "empty" in Helm, so `if` 
 {{- if or (hasPrefix "/" (toString .path)) (has ".." (splitList "/" (toString .path))) }}{{ fail "tsfPersistentStorage.path must be relative and must not contain '..'" }}{{ end }}
 {{- if not (regexMatch "^[A-Za-z0-9._/-]+$" (toString .path)) }}{{ fail "tsfPersistentStorage.path may contain only letters, digits, '.', '_', '-' and '/'" }}{{ end }}
 {{- end }}
+{{- if include "cortex-xdr.tsfAutoIntervalHours" $ }}
+{{- if not (regexMatch "^([1-9][0-9]?|1[0-5][0-9]|16[0-8])$" (include "cortex-xdr.tsfAutoIntervalHours" $)) }}{{ fail "tsfPersistentStorage.autoTsfIntervalHours must be an integer from 1 to 168" }}{{ end }}
+{{- end }}
 {{- range $name := list "memoryTsfTrigger" "cpuTsfTrigger" }}
 {{- $t := get $.Values.tsfPersistentStorage $name | default dict }}
 {{- if $t.enabled }}
@@ -132,6 +135,14 @@ Warning shown when TSF persistent storage is enabled but skipped. %q escapes the
 */}}
 {{- define "cortex-xdr.tsfStorageSkippedWarning" -}}
 {{- printf "WARNING: TSF persistent storage skipped: PVC %q in namespace %q was not found, is not Bound or is not ReadWriteMany (or no cluster, as with helm template). The agent runs without it; fix the PVC and run helm upgrade again." (.Values.tsfPersistentStorage.pvcName | toString) .Values.namespace.name -}}
+{{- end -}}
+
+{{/*
+tsfPersistentStorage.autoTsfIntervalHours as a string; empty when unset (the agent then uses 24 hours).
+*/}}
+{{- define "cortex-xdr.tsfAutoIntervalHours" -}}
+{{- $h := (.Values.tsfPersistentStorage | default dict).autoTsfIntervalHours -}}
+{{- if not (kindIs "invalid" $h) }}{{ toString $h }}{{ end -}}
 {{- end -}}
 
 {{/*

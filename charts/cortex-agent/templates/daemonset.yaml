@@ -135,6 +135,10 @@ spec:
           value: "/var/lib/cortex-tsf"
         {{- include "cortex-xdr.tsfTriggerEnv" (list . "memoryTsfTrigger" "XDR_TSF_MEMORY_TRIGGER") | nindent 8 }}
         {{- include "cortex-xdr.tsfTriggerEnv" (list . "cpuTsfTrigger" "XDR_TSF_CPU_TRIGGER") | nindent 8 }}
+        {{- with include "cortex-xdr.tsfAutoIntervalHours" . }}
+        - name: XDR_TSF_AUTO_INTERVAL_SECONDS
+          value: {{ mul (atoi .) 3600 | toString | quote }}
+        {{- end }}
         {{- end }}
 
         volumeMounts:
