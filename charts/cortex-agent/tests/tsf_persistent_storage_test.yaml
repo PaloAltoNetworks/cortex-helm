@@ -91,6 +91,33 @@ tests:
           content: persistentVolumeClaim
         template: templates/openshift-scc.yaml
 
+  - it: no unexpected shutdown env unless enabled
+    set: *storageOn
+    template: templates/daemonset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_COLLECT_AFTER_UNEXPECTED_SHUTDOWN }
+          any: true
+
+  - it: tsfCollectAfterUnexpectedShutdown renders its env
+    set:
+      <<: *storageOn
+      tsfPersistentStorage.tsfCollectAfterUnexpectedShutdown.enabled: true
+    template: templates/daemonset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_COLLECT_AFTER_UNEXPECTED_SHUTDOWN, value: "true" }
+
+  - it: tsfCollectAfterUnexpectedShutdown requires storage
+    set:
+      tsfPersistentStorage.tsfCollectAfterUnexpectedShutdown.enabled: true
+    template: templates/daemonset.yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: tsfPersistentStorage.tsfCollectAfterUnexpectedShutdown.enabled=true requires tsfPersistentStorage.enabled=true
+
   - it: memory trigger only, with defaults 65/300
     set:
       <<: *storageOn

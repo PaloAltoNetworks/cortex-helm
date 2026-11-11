@@ -133,6 +133,10 @@ spec:
               fieldPath: spec.nodeName
         - name: XDR_TSF_STORAGE_DIR
           value: "/var/lib/cortex-tsf"
+        {{- if (.Values.tsfPersistentStorage.tsfCollectAfterUnexpectedShutdown | default dict).enabled }}
+        - name: XDR_TSF_COLLECT_AFTER_UNEXPECTED_SHUTDOWN
+          value: "true"
+        {{- end }}
         {{- include "cortex-xdr.tsfTriggerEnv" (list . "memoryTsfTrigger" "XDR_TSF_MEMORY_TRIGGER") | nindent 8 }}
         {{- include "cortex-xdr.tsfTriggerEnv" (list . "cpuTsfTrigger" "XDR_TSF_CPU_TRIGGER") | nindent 8 }}
         {{- with include "cortex-xdr.tsfAutoIntervalHours" . }}

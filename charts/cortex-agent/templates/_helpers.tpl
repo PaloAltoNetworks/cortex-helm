@@ -99,6 +99,7 @@ Numbers are checked as strings: an integer 0 counts as "empty" in Helm, so `if` 
 {{- if include "cortex-xdr.tsfAutoIntervalHours" $ }}
 {{- if not (regexMatch "^([1-9][0-9]?|1[0-5][0-9]|16[0-8])$" (include "cortex-xdr.tsfAutoIntervalHours" $)) }}{{ fail "tsfPersistentStorage.autoTsfIntervalHours must be an integer from 1 to 168" }}{{ end }}
 {{- end }}
+{{- if and (.tsfCollectAfterUnexpectedShutdown | default dict).enabled (not .enabled) }}{{ fail "tsfPersistentStorage.tsfCollectAfterUnexpectedShutdown.enabled=true requires tsfPersistentStorage.enabled=true" }}{{ end }}
 {{- range $name := list "memoryTsfTrigger" "cpuTsfTrigger" }}
 {{- $t := get $.Values.tsfPersistentStorage $name | default dict }}
 {{- if $t.enabled }}

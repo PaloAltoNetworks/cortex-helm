@@ -61,6 +61,8 @@ expect_fail "must not contain '..'"                 "${ON[@]}" --set $P.path=a/.
 expect_fail "may contain only"                      "${ON[@]}" --set "$P.path=a\$b"
 expect_fail "memoryTsfTrigger.enabled=true requires tsfPersistentStorage.enabled=true" "${MEM[@]}"
 expect_fail "cpuTsfTrigger.enabled=true requires tsfPersistentStorage.enabled=true"    "${CPU[@]}"
+expect_fail "tsfCollectAfterUnexpectedShutdown.enabled=true requires tsfPersistentStorage.enabled=true" \
+    --set $P.tsfCollectAfterUnexpectedShutdown.enabled=true
 for v in 0 101 -5 abc 50.5; do
     expect_fail "memoryTsfTrigger.percent must be an integer from 1 to 100" "${ON[@]}" "${MEM[@]}" --set $P.memoryTsfTrigger.percent=$v
 done

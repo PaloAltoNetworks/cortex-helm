@@ -151,6 +151,10 @@ tsfPersistentStorage:
   path: ""
   # Minimum hours between automatic TSFs of any type (crash, memory, CPU), 1 to 168. Empty: 24.
   autoTsfIntervalHours: ""
+  # Collect a TSF after an unexpected agent shutdown (crash, OOM kill).
+  # Requires tsfPersistentStorage.enabled=true.
+  tsfCollectAfterUnexpectedShutdown:
+    enabled: false
   # Collect a TSF when agent memory stays at or above `percent` of its limit for `seconds`.
   # Requires tsfPersistentStorage.enabled=true.
   memoryTsfTrigger:
