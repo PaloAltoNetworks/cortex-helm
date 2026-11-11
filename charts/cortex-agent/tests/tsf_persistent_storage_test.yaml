@@ -91,7 +91,7 @@ tests:
           content: persistentVolumeClaim
         template: templates/openshift-scc.yaml
 
-  - it: memory trigger only, with defaults 90/300
+  - it: memory trigger only, with defaults 65/300
     set:
       <<: *storageOn
       tsfPersistentStorage.memoryTsfTrigger.enabled: true
@@ -99,7 +99,7 @@ tests:
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
-          content: { name: XDR_TSF_MEMORY_TRIGGER_PERCENT, value: "90" }
+          content: { name: XDR_TSF_MEMORY_TRIGGER_PERCENT, value: "65" }
       - contains:
           path: spec.template.spec.containers[0].env
           content: { name: XDR_TSF_MEMORY_TRIGGER_SECONDS, value: "300" }
@@ -161,7 +161,7 @@ tests:
           content: { name: XDR_TSF_MEMORY_TRIGGER_PERCENT, value: "100" }
       - contains:
           path: spec.template.spec.containers[0].env
-          content: { name: XDR_TSF_CPU_TRIGGER_PERCENT, value: "65" }
+          content: { name: XDR_TSF_CPU_TRIGGER_PERCENT, value: "90" }
       - notContains:
           path: spec.template.spec.containers[0].env
           content: { name: XDR_TSF_AUTO_INTERVAL_SECONDS }
