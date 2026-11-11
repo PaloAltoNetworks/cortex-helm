@@ -85,6 +85,83 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
+Validate tsfPersistentStorage. Fails install/upgrade on a missing or unsafe configuration.
+Numbers are checked as strings: an integer 0 counts as "empty" in Helm, so `if` would skip it.
+*/}}
+{{- define "cortex-xdr.validateTsfPersistentStorage" -}}
+{{- with .Values.tsfPersistentStorage }}
+{{- if .enabled }}
+{{- if not .pvcName }}{{ fail "tsfPersistentStorage.enabled=true requires tsfPersistentStorage.pvcName" }}{{ end }}
+{{- if not .path }}{{ fail "tsfPersistentStorage.enabled=true requires tsfPersistentStorage.path" }}{{ end }}
+{{- if or (hasPrefix "/" (toString .path)) (has ".." (splitList "/" (toString .path))) }}{{ fail "tsfPersistentStorage.path must be relative and must not contain '..'" }}{{ end }}
+{{- if not (regexMatch "^[A-Za-z0-9._/-]+$" (toString .path)) }}{{ fail "tsfPersistentStorage.path may contain only letters, digits, '.', '_', '-' and '/'" }}{{ end }}
+{{- end }}
+{{- if include "cortex-xdr.tsfAutoIntervalHours" $ }}
+{{- if not (regexMatch "^([1-9][0-9]?|1[0-5][0-9]|16[0-8])$" (include "cortex-xdr.tsfAutoIntervalHours" $)) }}{{ fail "tsfPersistentStorage.autoTsfIntervalHours must be an integer from 1 to 168" }}{{ end }}
+{{- end }}
+{{- if and (.tsfCollectAfterUnexpectedShutdown | default dict).enabled (not .enabled) }}{{ fail "tsfPersistentStorage.tsfCollectAfterUnexpectedShutdown.enabled=true requires tsfPersistentStorage.enabled=true" }}{{ end }}
+{{- range $name := list "memoryTsfTrigger" "cpuTsfTrigger" }}
+{{- $t := get $.Values.tsfPersistentStorage $name | default dict }}
+{{- if $t.enabled }}
+{{- if not $.Values.tsfPersistentStorage.enabled }}{{ fail (printf "tsfPersistentStorage.%s.enabled=true requires tsfPersistentStorage.enabled=true" $name) }}{{ end }}
+{{- if not (regexMatch "^([1-9][0-9]?|100)$" (toString $t.percent)) }}{{ fail (printf "tsfPersistentStorage.%s.percent must be an integer from 1 to 100" $name) }}{{ end }}
+{{- $sec := $t.seconds }}
+{{- if or (kindIs "bool" $sec) (ne (float64 $sec) (float64 (int64 $sec))) (lt (int64 $sec) 1) (gt (int64 $sec) 86400) }}{{ fail (printf "tsfPersistentStorage.%s.seconds must be an integer from 1 to 86400" $name) }}{{ end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+TSF persistent storage state.
+Returns "ready" when enabled and the PVC is Bound and ReadWriteMany at install/upgrade time,
+"skipped" when enabled but the PVC is not ready - missing, unbound, not RWX, or no cluster,
+and "" when disabled. Only "ready" mounts the PVC, so a bad PVC never blocks the agent pod
+at install/upgrade time.
+*/}}
+{{- define "cortex-xdr.tsfStorageState" -}}
+{{- $tsf := .Values.tsfPersistentStorage | default dict -}}
+{{- if $tsf.enabled -}}
+  {{- $pvc := lookup "v1" "PersistentVolumeClaim" .Values.namespace.name ($tsf.pvcName | toString) -}}
+  {{- $status := dig "status" dict $pvc -}}
+  {{- if and (eq (dig "phase" "" $status) "Bound") (has "ReadWriteMany" (dig "accessModes" list $status)) -}}
+ready
+  {{- else -}}
+skipped
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Warning shown when TSF persistent storage is enabled but skipped. %q escapes the user-supplied PVC name.
+*/}}
+{{- define "cortex-xdr.tsfStorageSkippedWarning" -}}
+{{- printf "WARNING: TSF persistent storage skipped: PVC %q in namespace %q was not found, is not Bound or is not ReadWriteMany (or no cluster, as with helm template). The agent runs without it; fix the PVC and run helm upgrade again." (.Values.tsfPersistentStorage.pvcName | toString) .Values.namespace.name -}}
+{{- end -}}
+
+{{/*
+tsfPersistentStorage.autoTsfIntervalHours as a string; empty when unset (the agent then uses 24 hours).
+*/}}
+{{- define "cortex-xdr.tsfAutoIntervalHours" -}}
+{{- $h := (.Values.tsfPersistentStorage | default dict).autoTsfIntervalHours -}}
+{{- if not (kindIs "invalid" $h) }}{{ toString $h }}{{ end -}}
+{{- end -}}
+
+{{/*
+Env vars for one TSF resource trigger, rendered only when the trigger is enabled.
+Args: list <root context> <values key> <env prefix>
+*/}}
+{{- define "cortex-xdr.tsfTriggerEnv" -}}
+{{- $t := get (index . 0).Values.tsfPersistentStorage (index . 1) | default dict }}
+{{- if $t.enabled }}
+- name: {{ index . 2 }}_PERCENT
+  value: {{ $t.percent | int | quote }}
+- name: {{ index . 2 }}_SECONDS
+  value: {{ $t.seconds | int | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
 Create the path of the /var/log volume mount on the host fs
 */}}
 {{- define "cortex-xdr.XdrVarLogHostPath" -}}
