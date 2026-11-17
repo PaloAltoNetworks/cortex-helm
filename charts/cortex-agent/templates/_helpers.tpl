@@ -185,6 +185,12 @@ Specify the SELinux context options type
 {{- end -}}
 {{- end -}}
 
+{{- define "cortex-xdr.mountHostKmDirectory" -}}
+{{- if and .Values.daemonset.mountHostKmDirectory (not (or .Values.platform.talos .Values.platform.autopilot .Values.platform.bottlerocket .Values.platform.flatcar)) -}}
+true
+{{- end -}}
+{{- end -}}
+
 {{/*
 Effective agent flavor: 1 (standard) or 3 (cloud/sensor).
 */}}

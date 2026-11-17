@@ -20,6 +20,7 @@
 | 1.11.0        | >=7.5         | Support for Flatcar Container Linux platform
 | 1.11.0        | >=7.5         | `agent.agentFlavor` added (1 = `standard`, 3 = `cloud/sensor`).
 | 1.12.0        | >=7.5         | Optional TSF persistent storage (`tsfPersistentStorage.*`) with memory/CPU TSF triggers
+| 1.12.0        | >=7.5         | `daemonset.mountHostKmDirectory` added (default `true`). Agents >= 9.5 don't need the host `/lib/modules` mount.
 
 ## Installing Cortex XDR helm chart
 
@@ -108,6 +109,7 @@ Even when using `--reuse-values` (which uses the values of the previous installa
 | `namespace.name`                       | Name of the namespace the agent resides on                                                                 | Since 1.6.0
 | `namespace.create`                     | Create/Don't create namespace for the agent                                                                | Since 1.6.0
 | `daemonset.selinuxOptionsSpcT`         | Set SELinux Options type to 'spc_t'                                                                        | Since 1.8.0
+| `daemonset.mountHostKmDirectory`       | Mount the host's `/lib/modules` (default `true`). Required only for agents < 9.5 | Since 1.12.0
 | `agent.sensorMode`                     | **Removed in 1.11.0 — use `agent.agentFlavor: 3` instead.** Enable sensor mode for lightweight cloud-native deployments. Also selects `daemonset.resources.sensor` over `daemonset.resources.full` | Since 1.10.0, agent >= 9.3
 | `daemonset.resources.full`             | Resource requests/limits used when `agent.agentFlavor` is `1` (default)                                 | Since 1.10.0
 | `daemonset.resources.sensor`           | Resource requests/limits used when `agent.agentFlavor` is `3`                                            | Since 1.10.0

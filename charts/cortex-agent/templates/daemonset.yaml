@@ -154,7 +154,7 @@ spec:
         - name: var-log
           mountPath: /var/log
 
-        {{- if not (or .Values.platform.talos .Values.platform.autopilot .Values.platform.bottlerocket .Values.platform.flatcar) }}
+        {{- if include "cortex-xdr.mountHostKmDirectory" . }}
         - name: host-km-directory
           mountPath: /lib/modules
         {{- end }}
@@ -196,7 +196,7 @@ spec:
           path: {{ include "cortex-xdr.XdrVarLogHostPath" . | quote }}
           type: DirectoryOrCreate
 
-      {{- if not (or .Values.platform.talos .Values.platform.autopilot .Values.platform.bottlerocket .Values.platform.flatcar) }}
+      {{- if include "cortex-xdr.mountHostKmDirectory" . }}
       - name: host-km-directory
         hostPath:
           path: /lib/modules

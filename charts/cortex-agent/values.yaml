@@ -96,6 +96,9 @@ daemonset:
   # Time for which k8s waits for the agent's pod to terminate gracefully.
   terminationGracePeriodSeconds: 90
 
+  # Mount the host's /lib/modules into the agent container.
+  mountHostKmDirectory: true
+
   image:
     # image repository url, can be retrieved from the tenant
     repository: ""
