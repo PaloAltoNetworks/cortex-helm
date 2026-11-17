@@ -137,3 +137,33 @@ daemonset:
 namespace:
   create: true
   name: "cortex-xdr"
+
+# Optional: copy automatic TSFs (crash, memory, CPU; at most one per type) to
+# customer-provisioned persistent storage, so they survive node replacement.
+tsfPersistentStorage:
+  enabled: false
+  # Name of an existing PVC in namespace.name (customer-created, ReadWriteMany).
+  # Mounted only if it is Bound and RWX at install/upgrade time; otherwise the feature is skipped with a WARNING.
+  # Always skipped by helm template / GitOps renders (no cluster to look up).
+  pvcName: ""
+  # Sub-directory inside the volume, relative and without "..", e.g. "cortex/prod-cluster-1".
+  # Each node writes only to <path>/<node-name>.
+  path: ""
+  # Minimum hours between automatic TSFs of any type (crash, memory, CPU), 1 to 168. Empty: 24.
+  autoTsfIntervalHours: ""
+  # Collect a TSF after an unexpected agent shutdown (crash, OOM kill).
+  # Requires tsfPersistentStorage.enabled=true.
+  tsfCollectAfterUnexpectedShutdown:
+    enabled: false
+  # Collect a TSF when agent memory stays at or above `percent` of its limit for `seconds`.
+  # Requires tsfPersistentStorage.enabled=true.
+  memoryTsfTrigger:
+    enabled: false
+    percent: 65
+    seconds: 300
+  # Collect a TSF when agent CPU stays at or above `percent` of its CPU limit for `seconds`.
+  # Requires tsfPersistentStorage.enabled=true.
+  cpuTsfTrigger:
+    enabled: false
+    percent: 90
+    seconds: 300
