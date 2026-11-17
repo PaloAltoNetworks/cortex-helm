@@ -185,8 +185,30 @@ Specify the SELinux context options type
 {{- end -}}
 {{- end -}}
 
+{{/*
+Agents >= 9.5 don't need the host's /lib/modules. "auto" decides by daemonset.image.tag;
+an unknown version (e.g. "latest") mounts it.
+*/}}
+{{- define "cortex-xdr.agentNeedsHostKmDirectory" -}}
+{{- $version := regexFind "^v?[0-9]+\\.[0-9]+" (toString .Values.daemonset.image.tag) | trimPrefix "v" -}}
+{{- if $version -}}
+{{- $parts := splitList "." $version -}}
+{{- $major := atoi (index $parts 0) -}}
+{{- $minor := atoi (index $parts 1) -}}
+{{- if or (lt $major 9) (and (eq $major 9) (lt $minor 5)) -}}
+true
+{{- end -}}
+{{- else -}}
+true
+{{- end -}}
+{{- end -}}
+
 {{- define "cortex-xdr.mountHostKmDirectory" -}}
-{{- if and .Values.daemonset.mountHostKmDirectory (not (or .Values.platform.talos .Values.platform.autopilot .Values.platform.bottlerocket .Values.platform.flatcar)) -}}
+{{- $mount := toString .Values.daemonset.mountHostKmDirectory -}}
+{{- if eq $mount "auto" -}}
+{{- $mount = include "cortex-xdr.agentNeedsHostKmDirectory" . | default "false" -}}
+{{- end -}}
+{{- if and (eq $mount "true") (not (or .Values.platform.talos .Values.platform.autopilot .Values.platform.bottlerocket .Values.platform.flatcar)) -}}
 true
 {{- end -}}
 {{- end -}}

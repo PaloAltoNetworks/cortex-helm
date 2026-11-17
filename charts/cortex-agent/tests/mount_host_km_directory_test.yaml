@@ -1,0 +1,97 @@
+suite: mount host km directory
+templates:
+  - templates/daemonset.yaml
+tests:
+  - it: auto mounts for an unknown tag (default "latest")
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content: { name: host-km-directory, hostPath: { path: /lib/modules, type: Directory } }
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content: { name: host-km-directory, mountPath: /lib/modules }
+
+  - it: auto mounts for agents below 9.5
+    set:
+      daemonset.image.tag: "9.4.0.12345"
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content: { name: host-km-directory, hostPath: { path: /lib/modules, type: Directory } }
+
+  - it: auto mounts for old major versions
+    set:
+      daemonset.image.tag: "8.9"
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content: { name: host-km-directory, hostPath: { path: /lib/modules, type: Directory } }
+
+  - it: auto doesn't mount for 9.5
+    set:
+      daemonset.image.tag: "9.5.0.12345"
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content: { name: host-km-directory }
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content: { name: host-km-directory }
+          any: true
+
+  - it: auto doesn't mount for 9.10 and 10.x
+    set:
+      daemonset.image.tag: "9.10.1"
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content: { name: host-km-directory }
+          any: true
+
+  - it: auto doesn't mount for 10.0
+    set:
+      daemonset.image.tag: "10.0"
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content: { name: host-km-directory }
+          any: true
+
+  - it: auto handles a v prefix
+    set:
+      daemonset.image.tag: "v9.6.0"
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content: { name: host-km-directory }
+          any: true
+
+  - it: true mounts even for 9.5 and above
+    set:
+      daemonset.mountHostKmDirectory: true
+      daemonset.image.tag: "9.6.0"
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content: { name: host-km-directory, hostPath: { path: /lib/modules, type: Directory } }
+
+  - it: false doesn't mount even below 9.5
+    set:
+      daemonset.mountHostKmDirectory: false
+      daemonset.image.tag: "9.4.0"
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content: { name: host-km-directory }
+          any: true
+
+  - it: never mounts on talos
+    set:
+      platform.talos: true
+      daemonset.image.tag: "9.4.0"
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content: { name: host-km-directory }
+          any: true
