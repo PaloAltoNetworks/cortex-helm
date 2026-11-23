@@ -32,15 +32,28 @@ for extra in "" "--set serviceAccount.openshift.scc.create=true"; do
     fi
 done
 
-# S1: helm template has no cluster, so the PVC lookup is empty and the feature is skipped:
-# a WARNING comment, the agent still renders, and no TSF env, mount, volume or SCC entry.
+# S1: helm template has no cluster, so the PVC lookup is empty and the storage is skipped:
+# a WARNING comment, the agent still renders, no storage env, mount, volume or SCC entry,
+# and the triggers stay on (kept locally).
 # The mounted path (PVC Bound and RWX) is covered by charts/cortex-agent/tests (helm unittest).
 out=$(render "$CHART" "${ON[@]}" "${MEM[@]}" "${CPU[@]}" --set serviceAccount.openshift.scc.create=true)
 has "$out" '# WARNING: TSF persistent storage skipped: PVC "cortex-tsf" in namespace "cortex-xdr"' \
     && ok "S1 skipped WARNING rendered" || bad "S1 skipped WARNING missing"
 has "$out" "kind: DaemonSet" && ok "S1 agent DaemonSet rendered" || bad "S1 agent DaemonSet missing"
-for unwanted in 'tsf-storage' 'XDR_TSF_' 'XDR_NODE_NAME' '- persistentVolumeClaim'; do
+for unwanted in 'tsf-storage' 'XDR_TSF_STORAGE_DIR' 'XDR_NODE_NAME' '- persistentVolumeClaim'; do
     has "$out" "$unwanted" && bad "S1 renders: $unwanted" || ok "S1 does not render: $unwanted"
+done
+env_is "$out" XDR_TSF_MEMORY_TRIGGER_PERCENT 65 && env_is "$out" XDR_TSF_CPU_TRIGGER_PERCENT 90 \
+    && ok "S1 triggers still rendered" || bad "S1 triggers missing"
+
+# S3: the automatic TSFs work with the storage off.
+out=$(render "$CHART" "${MEM[@]}" "${CPU[@]}" --set $P.tsfCollectAfterUnexpectedShutdown.enabled=true \
+    --set $P.autoTsfIntervalHours=2)
+env_is "$out" XDR_TSF_COLLECT_AFTER_UNEXPECTED_SHUTDOWN true && env_is "$out" XDR_TSF_MEMORY_TRIGGER_PERCENT 65 \
+    && env_is "$out" XDR_TSF_CPU_TRIGGER_PERCENT 90 && env_is "$out" XDR_TSF_AUTO_INTERVAL_SECONDS 7200 \
+    && ok "S3 storage off: crash, memory, CPU and interval env rendered" || bad "S3 storage off: TSF env missing"
+for unwanted in 'XDR_TSF_STORAGE_DIR' 'tsf-storage' 'WARNING'; do
+    has "$out" "$unwanted" && bad "S3 renders: $unwanted" || ok "S3 does not render: $unwanted"
 done
 
 # S2: the PVC name in the WARNING is escaped.
@@ -59,10 +72,8 @@ expect_fail "requires tsfPersistentStorage.path"    --set $P.enabled=true --set 
 expect_fail "must be relative"                      "${ON[@]}" --set $P.path=/abs
 expect_fail "must not contain '..'"                 "${ON[@]}" --set $P.path=a/../b
 expect_fail "may contain only"                      "${ON[@]}" --set "$P.path=a\$b"
-expect_fail "memoryTsfTrigger.enabled=true requires tsfPersistentStorage.enabled=true" "${MEM[@]}"
-expect_fail "cpuTsfTrigger.enabled=true requires tsfPersistentStorage.enabled=true"    "${CPU[@]}"
-expect_fail "tsfCollectAfterUnexpectedShutdown.enabled=true requires tsfPersistentStorage.enabled=true" \
-    --set $P.tsfCollectAfterUnexpectedShutdown.enabled=true
+expect_fail "memoryTsfTrigger.percent must be an integer from 1 to 100" "${MEM[@]}" --set $P.memoryTsfTrigger.percent=0
+expect_fail "autoTsfIntervalHours must be an integer from 1 to 168" --set $P.autoTsfIntervalHours=0
 for v in 0 101 -5 abc 50.5; do
     expect_fail "memoryTsfTrigger.percent must be an integer from 1 to 100" "${ON[@]}" "${MEM[@]}" --set $P.memoryTsfTrigger.percent=$v
 done
