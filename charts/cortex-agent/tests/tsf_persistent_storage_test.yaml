@@ -110,13 +110,49 @@ tests:
           path: spec.template.spec.containers[0].env
           content: { name: XDR_TSF_COLLECT_AFTER_UNEXPECTED_SHUTDOWN, value: "true" }
 
-  - it: tsfCollectAfterUnexpectedShutdown requires storage
+  # The automatic TSFs do not need the storage: without it the agent keeps them locally.
+  - it: storage off - crash, memory, CPU and interval env render without the PVC
     set:
       tsfPersistentStorage.tsfCollectAfterUnexpectedShutdown.enabled: true
-    template: templates/daemonset.yaml
+      tsfPersistentStorage.memoryTsfTrigger.enabled: true
+      tsfPersistentStorage.cpuTsfTrigger.enabled: true
+      tsfPersistentStorage.autoTsfIntervalHours: 2
     asserts:
-      - failedTemplate:
-          errorMessage: tsfPersistentStorage.tsfCollectAfterUnexpectedShutdown.enabled=true requires tsfPersistentStorage.enabled=true
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_COLLECT_AFTER_UNEXPECTED_SHUTDOWN, value: "true" }
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_MEMORY_TRIGGER_PERCENT, value: "65" }
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_CPU_TRIGGER_PERCENT, value: "90" }
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_AUTO_INTERVAL_SECONDS, value: "7200" }
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_TSF_STORAGE_DIR }
+          any: true
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content: { name: XDR_NODE_NAME }
+          any: true
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.volumes
+          content: { name: tsf-storage }
+          any: true
+        template: templates/daemonset.yaml
+      - notContains:
+          path: volumes
+          content: persistentVolumeClaim
+        template: templates/openshift-scc.yaml
 
   - it: memory trigger only, with defaults 65/300
     set:
@@ -246,7 +282,8 @@ tests:
             subPathExpr: a/b/$(XDR_NODE_NAME)
 
   # A PVC that is missing, not Bound, not RWX or in another namespace is skipped:
-  # no env, mount, volume or SCC entry. The agent DaemonSet still renders.
+  # no storage env, mount, volume or SCC entry. The agent DaemonSet still renders,
+  # and the automatic TSF triggers stay on (kept locally).
   - it: skips a missing PVC and still renders the agent
     set:
       <<: *storageOn
@@ -270,10 +307,9 @@ tests:
           content: { name: XDR_TSF_STORAGE_DIR }
           any: true
         template: templates/daemonset.yaml
-      - notContains:
+      - contains:
           path: spec.template.spec.containers[0].env
-          content: { name: XDR_TSF_MEMORY_TRIGGER_PERCENT }
-          any: true
+          content: { name: XDR_TSF_MEMORY_TRIGGER_PERCENT, value: "65" }
         template: templates/daemonset.yaml
       - notContains:
           path: volumes

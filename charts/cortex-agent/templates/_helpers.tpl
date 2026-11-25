@@ -99,11 +99,9 @@ Numbers are checked as strings: an integer 0 counts as "empty" in Helm, so `if` 
 {{- if include "cortex-xdr.tsfAutoIntervalHours" $ }}
 {{- if not (regexMatch "^([1-9][0-9]?|1[0-5][0-9]|16[0-8])$" (include "cortex-xdr.tsfAutoIntervalHours" $)) }}{{ fail "tsfPersistentStorage.autoTsfIntervalHours must be an integer from 1 to 168" }}{{ end }}
 {{- end }}
-{{- if and (.tsfCollectAfterUnexpectedShutdown | default dict).enabled (not .enabled) }}{{ fail "tsfPersistentStorage.tsfCollectAfterUnexpectedShutdown.enabled=true requires tsfPersistentStorage.enabled=true" }}{{ end }}
 {{- range $name := list "memoryTsfTrigger" "cpuTsfTrigger" }}
 {{- $t := get $.Values.tsfPersistentStorage $name | default dict }}
 {{- if $t.enabled }}
-{{- if not $.Values.tsfPersistentStorage.enabled }}{{ fail (printf "tsfPersistentStorage.%s.enabled=true requires tsfPersistentStorage.enabled=true" $name) }}{{ end }}
 {{- if not (regexMatch "^([1-9][0-9]?|100)$" (toString $t.percent)) }}{{ fail (printf "tsfPersistentStorage.%s.percent must be an integer from 1 to 100" $name) }}{{ end }}
 {{- $sec := $t.seconds }}
 {{- if or (kindIs "bool" $sec) (ne (float64 $sec) (float64 (int64 $sec))) (lt (int64 $sec) 1) (gt (int64 $sec) 86400) }}{{ fail (printf "tsfPersistentStorage.%s.seconds must be an integer from 1 to 86400" $name) }}{{ end }}

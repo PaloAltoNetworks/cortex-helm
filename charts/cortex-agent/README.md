@@ -116,9 +116,9 @@ Even when using `--reuse-values` (which uses the values of the previous installa
 | `tsfPersistentStorage.pvcName`         | Existing ReadWriteMany PVC in `namespace.name` (required when enabled). Mounted only if Bound and RWX at install/upgrade time, otherwise skipped with a WARNING; always skipped by `helm template` | Since 1.12.0
 | `tsfPersistentStorage.path`            | Relative folder in the volume, e.g. `cortex/prod-cluster-1`; each node writes to `<path>/<node-name>`      | Since 1.12.0
 | `tsfPersistentStorage.autoTsfIntervalHours` | Minimum hours between automatic TSFs of any type, 1 to 168; empty means 24 | Since 1.12.0
-| `tsfPersistentStorage.tsfCollectAfterUnexpectedShutdown.enabled` | Collect a TSF after an unexpected agent shutdown (crash, OOM kill). Requires `tsfPersistentStorage.enabled` | Since 1.12.0
-| `tsfPersistentStorage.memoryTsfTrigger.enabled` / `.percent` / `.seconds` | Collect a TSF when agent memory stays at or above `percent` (default 65) of its limit for `seconds` (default 300, 1 to 86400). Requires `tsfPersistentStorage.enabled` | Since 1.12.0
-| `tsfPersistentStorage.cpuTsfTrigger.enabled` / `.percent` / `.seconds`    | Collect a TSF when agent CPU stays at or above `percent` (default 90) of its CPU limit for `seconds` (default 300, 1 to 86400). Requires `tsfPersistentStorage.enabled` | Since 1.12.0
+| `tsfPersistentStorage.tsfCollectAfterUnexpectedShutdown.enabled` | Collect a TSF after an unexpected agent shutdown (crash, OOM kill). Works without `tsfPersistentStorage.enabled` (TSF kept in the agent pod) | Since 1.12.0
+| `tsfPersistentStorage.memoryTsfTrigger.enabled` / `.percent` / `.seconds` | Collect a TSF when agent memory stays at or above `percent` (default 65) of its limit for `seconds` (default 300, 1 to 86400). Works with or without `tsfPersistentStorage.enabled` | Since 1.12.0
+| `tsfPersistentStorage.cpuTsfTrigger.enabled` / `.percent` / `.seconds`    | Collect a TSF when agent CPU stays at or above `percent` (default 90) of its CPU limit for `seconds` (default 300, 1 to 86400). Works with or without `tsfPersistentStorage.enabled` | Since 1.12.0
 
 Note: Helm requires commas in arguments to be escaped.
 
